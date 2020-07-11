@@ -55,22 +55,23 @@ export default {
     }
   },
   methods: {
-    find () {
-    //   console.log('Entered Dessert ID is :', this.id)
-    //   console.log('Entered Dessert name is :', this.name)
-    //   console.log('Entered Calories value is :', this.calories)
-    //   console.log('Entered Rating is :', this.rating)
-    //   console.log('Entered Status is :', this.status)
-      fetch(`https://desserts-api-4wh4kj2sza-uc.a.run.app/${this.id}`, {
-        method: 'GET',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
+    async find () {
+      try {
+        const response = await fetch(`https://desserts-api-4wh4kj2sza-uc.a.run.app/${this.id}`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        if (response) {
+          const respObj = await response.json()
+          const dessert = respObj.data
+          console.log('Dessert data from SQL DB', dessert)
         }
-      }).then(resObj => {
-        const dessert = resObj.body
-        console.log('Dessert data from SQL DB :', dessert)
-      })
+      } catch (ex) {
+        console.log('Exception error :', ex.toString())
+      }
     }
   }
 }
