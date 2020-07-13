@@ -1,10 +1,11 @@
 <template>
 <v-container>
-  <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+<v-btn color="red" v-if="isSignIn == false" @click="signIn">Google Sign-In</v-btn>
+<v-btn color="red" outlined="" v-if="isSignIn == true" @click="signOut">Logout</v-btn>
 <h1 class="display-2 font-weight-thin mb-2">
 Dessert information request form
 </h1>
-      <v-row align="center" justify="center">
+      <v-row v-if="isSignIn == true" align="center" justify="center">
 <v-col cols="6" md="6">
     <v-form>
 <v-text-field
@@ -23,10 +24,7 @@ Dessert information request form
   </v-btn>
 </v-col>
       </v-row>
-      <v-btn color="primary" outlined @click="logout">
-        <v-icon left>mdi-logout</v-icon>
-        Sign-Out
-        </v-btn>
+
 <v-divider></v-divider>
 <div>
   {{dessertObj}}
@@ -37,6 +35,7 @@ The userID is : {{status}}
  </v-container>
 </template>
 <script>
+
 export default {
   data () {
     return {
@@ -44,8 +43,18 @@ export default {
       dessertObj: null,
       status: null,
       userJwtToken: '',
-      loading: null
+      loading: null,
+      isInit: false,
+      isSignIn: false
     }
+  },
+  created () {
+    const that = this
+    const checkGauthLoad = setInterval(function () {
+      that.isInit = that.$gAuth.isInit
+      that.isSignIn = that.$gAuth.isAuthorized
+      if (that.isInit) clearInterval(checkGauthLoad)
+    }, 1000)
   },
   methods: {
     async find () {
@@ -54,9 +63,8 @@ export default {
         const response = await fetch(`https://desserts-api-4wh4kj2sza-uc.a.run.app/${this.id}`, {
           method: 'GET',
           mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers: { Authorization: 'Bearer ' + this.userJwtToken }
+
         })
         if (response) {
           const respObj = await response.json()
@@ -69,19 +77,44 @@ export default {
         console.log('Exception error :', ex.toString())
       }
     },
-    onSignIn (googleUser) {
-      var profile = googleUser.getBasicProfile()
-      this.status = profile.getId()
-      console.log('Profile Info', profile.getId())
-      this.userJwtToken = googleUser.getAuthResponse().id_token
-      console.log(this.userJwtToken)
+    signIn () {
+      this.$gAuth
+        .signIn()
+        .then(GoogleUser => {
+          // on success do something
+          // console.log('GoogleUser', GoogleUser)
+          // console.log('getId', GoogleUser.getId())
+          // console.log('getBasicProfile', GoogleUser.getBasicProfile())
+          // console.log('getAuthResponse', GoogleUser.getAuthResponse())
+          this.status = GoogleUser.getId()
+          this.userJwtToken = GoogleUser.getAuthResponse().id_token
+          // console.log(
+          //   'getAuthResponse',
+          //   this.$gAuth.GoogleAuth.currentUser.get().getAuthResponse()
+          // )
+          console.log(this.userJwtToken)
+          this.isSignIn = this.$gAuth.isAuthorized
+        })
+        .catch(error => {
+          // on fail do something
+          console.error(error)
+        })
     },
-    logout () {
-      /* eslint-disable */
-      gapi.auth2.getAuthInstance().signOut()
-      this.userJwtToken = ''
-      /* eslint-enable */
+
+    signOut () {
+      this.$gAuth
+        .signOut()
+        .then(() => {
+          // on success do something
+          this.isSignIn = this.$gAuth.isAuthorized
+          console.log('isSignIn', this.$gAuth.isAuthorized)
+        })
+        .catch(error => {
+          // on fail do something
+          console.error(error)
+        })
     }
+
   }
 }
 </script>
