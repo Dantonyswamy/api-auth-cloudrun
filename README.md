@@ -1,3 +1,5 @@
+
+A VueJS frontend that makes authenticated request to a MySQL backend using JWT tokens
 # api-auth-cloudrun
 
 ## Project setup
